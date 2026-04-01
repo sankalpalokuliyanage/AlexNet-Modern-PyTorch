@@ -61,9 +61,9 @@ Copy and paste these commands into a Colab cell to test the repository:
 
 
 ## 📂 Project Structure
-direct_alexnet_90epochs.ph - Model trained using 90 epochs
-AlexNet_Training.py - The training loop with AMP optimization.
-alexNet_predict.py - Inference script with command-line argument support.
+direct_alexnet_90epochs.ph - Model trained using 90 epochs | 
+AlexNet_Training.py - The training loop with AMP optimization. | 
+alexNet_predict.py - Inference script with command-line argument support. | 
 README.md - Documentation and usage guide.
 
 
