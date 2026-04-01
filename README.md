@@ -40,7 +40,11 @@ Precision: Mixed Precision (FP16)
 ## 🔍 Inference (Prediction)
 Use the predict.py script to classify a single image. You must provide the image path using the --image flag.
 ```bash
-python alexNet_predict.py --image path/to/your/image.jpg
+python alexNet_predict.py
+```
+or
+```bash
+py alexNet_predict.py
 ```
 
 ## Run in Google Colab:
@@ -52,7 +56,7 @@ Copy and paste these commands into a Colab cell to test the repository:
 ```
 ### 2. Run inference on a test image (Make sure test_image.jpg exists)
 ```bash
-!python alexNet_predict.py --image test_image.jpg
+!python AlexNetColab_predict.py --image test_image.jpg
 ```
 
 
