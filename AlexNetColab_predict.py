@@ -2,9 +2,8 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 from PIL import Image
-from google.colab import files
-import io
-import matplotlib.pyplot as plt
+import argparse
+import os
 
 # 1. MODEL ARCHITECTURE (Must match your 8-layers)
 class AlexNet8Layers(nn.Module):
@@ -30,43 +29,43 @@ class AlexNet8Layers(nn.Module):
         x = torch.flatten(x, 1)
         return self.classifier(x)
 
-# 2. LOAD MODEL
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = AlexNet8Layers(num_classes=10).to(device)
-try:
-    model.load_state_dict(torch.load('direct_alexnet_90epochs.pth', map_location=device))
-    model.eval()
-    print("✅ Model loaded successfully!")
-except:
-    print("❌ Error: 'direct_alexnet_90epochs.pth' not found in Colab files.")
+def run_prediction(image_path):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
-classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+    # Load Model
+    model = AlexNet8Layers(num_classes=10).to(device)
+    if os.path.exists('direct_alexnet_90epochs.pth'):
+        model.load_state_dict(torch.load('direct_alexnet_90epochs.pth', map_location=device))
+        model.eval()
+    else:
+        print("Error: Model weights not found!")
+        return
 
-# 3. UPLOAD AND PREDICT FUNCTION
-print("\nClick the button below to upload an image:")
-uploaded = files.upload()
-
-for filename in uploaded.keys():
-    # Load and Pre-process Image
-    img_data = uploaded[filename]
-    img = Image.open(io.BytesIO(img_data)).convert('RGB')
-    
+    # Image Transform
     transform = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
-    
-    img_t = transform(img).unsqueeze(0).to(device)
 
-    # Perform Prediction
-    with torch.no_grad():
-        output = model(img_t)
-        probabilities = torch.nn.functional.softmax(output[0], dim=0)
-        confidence, predicted = torch.max(probabilities, 0)
+    # Predict
+    try:
+        img = Image.open(image_path).convert('RGB')
+        img_t = transform(img).unsqueeze(0).to(device)
+        with torch.no_grad():
+            output = model(img_t)
+            probabilities = torch.nn.functional.softmax(output[0], dim=0)
+            confidence, predicted = torch.max(probabilities, 0)
+        
+        print(f"\nResult for: {image_path}")
+        print(f"Prediction: {classes[predicted.item()].upper()}")
+        print(f"Confidence: {confidence.item() * 100:.2f}%\n")
+    except Exception as e:
+        print(f"Error processing image: {e}")
 
-    # Show Result
-    plt.imshow(img)
-    plt.axis('off')
-    plt.title(f"Prediction: {classes[predicted.item()].upper()}\nConfidence: {confidence.item() * 100:.2f}%")
-    plt.show()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--image', type=str, required=True, help="Path to image")
+    args = parser.parse_args()
+    run_prediction(args.image)
