@@ -2,9 +2,11 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 from PIL import Image
-import gradio as gr
+from google.colab import files
+import io
+import matplotlib.pyplot as plt
 
-# 1. MODEL ARCHITECTURE (Exact 8-layer AlexNet)
+# 1. MODEL ARCHITECTURE (Must match your 8-layers)
 class AlexNet8Layers(nn.Module):
     def __init__(self, num_classes=10):
         super(AlexNet8Layers, self).__init__()
@@ -28,43 +30,43 @@ class AlexNet8Layers(nn.Module):
         x = torch.flatten(x, 1)
         return self.classifier(x)
 
-# 2. SETUP DEVICE AND LOAD MODEL
+# 2. LOAD MODEL
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = AlexNet8Layers(num_classes=10).to(device)
-
-model_path = 'direct_alexnet_90epochs.pth'
 try:
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.load_state_dict(torch.load('direct_alexnet_90epochs.pth', map_location=device))
     model.eval()
     print("✅ Model loaded successfully!")
 except:
-    print(f"❌ Error: '{model_path}' not found!")
+    print("❌ Error: 'direct_alexnet_90epochs.pth' not found in Colab files.")
 
 classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
-# 3. PREDICTION FUNCTION
-def predict_image(inp_img):
-    if inp_img is None: return None
+# 3. UPLOAD AND PREDICT FUNCTION
+print("\nClick the button below to upload an image:")
+uploaded = files.upload()
+
+for filename in uploaded.keys():
+    # Load and Pre-process Image
+    img_data = uploaded[filename]
+    img = Image.open(io.BytesIO(img_data)).convert('RGB')
+    
     transform = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
-    img = Image.fromarray(inp_img.astype('uint8'), 'RGB')
+    
     img_t = transform(img).unsqueeze(0).to(device)
+
+    # Perform Prediction
     with torch.no_grad():
         output = model(img_t)
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
-    return {classes[i]: float(probabilities[i]) for i in range(10)}
+        confidence, predicted = torch.max(probabilities, 0)
 
-# 4. CREATE INTERFACE (Removed theme to fix 404 error)
-interface = gr.Interface(
-    fn=predict_image, 
-    inputs=gr.Image(), 
-    outputs=gr.Label(num_top_classes=3),
-    title="AlexNet CIFAR-10 Classifier"
-)
-
-# 5. LAUNCH (With Colab specific fix)
-# share=True ලබා දුන් විට ලැබෙන public link එක මගින් HTML Object ප්‍රශ්නය විසඳේ
-interface.launch(share=True, debug=True)
+    # Show Result
+    plt.imshow(img)
+    plt.axis('off')
+    plt.title(f"Prediction: {classes[predicted.item()].upper()}\nConfidence: {confidence.item() * 100:.2f}%")
+    plt.show()
