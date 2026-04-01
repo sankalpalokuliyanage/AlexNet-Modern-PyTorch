@@ -3,8 +3,10 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 from PIL import Image
 import gradio as gr
+import numpy as np
 
-# 1. Model Architecture (Exact 8-layer AlexNet)
+# 1. MODEL ARCHITECTURE (Exact 8-layer AlexNet)
+# This class definition must be identical to the one used during training.
 class AlexNet8Layers(nn.Module):
     def __init__(self, num_classes=10):
         super(AlexNet8Layers, self).__init__()
@@ -28,31 +30,35 @@ class AlexNet8Layers(nn.Module):
         x = torch.flatten(x, 1)
         return self.classifier(x)
 
-# 2. Setup Device and Load Model
+# 2. SETUP DEVICE AND LOAD MODEL
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = AlexNet8Layers(num_classes=10).to(device)
 
-# Load the saved model weights
+# Load the saved model weights (.pth file)
+model_path = 'direct_alexnet_90epochs.pth'
 try:
-    model.load_state_dict(torch.load('direct_alexnet_90epochs.pth', map_location=device))
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
-    print("Model loaded successfully!")
+    print("✅ Model loaded successfully!")
 except FileNotFoundError:
-    print("Error: 'direct_alexnet_90epochs.pth' not found. Please upload it to Colab.")
+    print(f"❌ Error: '{model_path}' not found. Please upload the file to Colab's file sidebar.")
 
+# CIFAR-10 Class Names
 classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
-# 3. Prediction Function
-def predict(inp_img):
-    if inp_img is None: return None
+# 3. PREDICTION FUNCTION
+def predict_image(inp_img):
+    if inp_img is None:
+        return None
     
+    # Image Pre-processing (Must match training settings)
     transform = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     
-    # Convert numpy array to PIL Image
+    # Gradio sends image as numpy array, convert to PIL
     img = Image.fromarray(inp_img.astype('uint8'), 'RGB')
     img_t = transform(img).unsqueeze(0).to(device)
     
@@ -60,18 +66,21 @@ def predict(inp_img):
         output = model(img_t)
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
     
-    # Return dictionary of top labels
-    return {classes[i]: float(probabilities[i]) for i in range(10)}
+    # Create a dictionary of results for Gradio Label output
+    results = {classes[i]: float(probabilities[i]) for i in range(10)}
+    return results
 
-# 4. Create and Launch Interface
-# Changed share=False and added inline=True for Colab stability
+# 4. CREATE GRADIO INTERFACE
 interface = gr.Interface(
-    fn=predict, 
+    fn=predict_image, 
     inputs=gr.Image(), 
     outputs=gr.Label(num_top_classes=3),
     title="AlexNet CIFAR-10 Classifier",
-    description="Upload an image to see the top 3 predictions from your 8-layer AlexNet model."
+    description="Upload an image to see the top 3 predictions from your custom 8-layer AlexNet model.",
+    theme="huggingface"
 )
 
-# Use this for Colab to avoid Certificate issues
-interface.launch(inline=True, share=False, debug=True)
+# 5. LAUNCH IN COLAB
+# share=False avoids SSL/Certificate issues. 
+# inline=True displays the UI directly in the notebook cell.
+interface.launch(inline=True, share=False, height=550)
