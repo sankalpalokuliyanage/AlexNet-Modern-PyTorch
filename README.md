@@ -20,7 +20,7 @@ A modern implementation of the 8-layer AlexNet architecture using PyTorch, optim
 To get started, clone the repository and ensure you have the necessary libraries installed:
 
 ```bash
-git clone [https://github.com/sankalpalokuliyanage/AlexNet-Modern-PyTorch.git](https://github.com/sankalpalokuliyanage/AlexNet-Modern-PyTorch.git)
+git clone https://github.com/sankalpalokuliyanage/AlexNet-Modern-PyTorch.git
 cd AlexNet-Modern-PyTorch
 pip install torch torchvision pillow
 ```
@@ -51,7 +51,7 @@ py alexNet_predict.py
 Copy and paste these commands into a Colab cell to test the repository:
 ### 1. Clone the repository
 ```bash
-!git clone [https://github.com/sankalpalokuliyanage/AlexNet-Modern-PyTorch.git](https://github.com/sankalpalokuliyanage/AlexNet-Modern-PyTorch.git)
+!git clone https://github.com/sankalpalokuliyanage/AlexNet-Modern-PyTorch.git
 %cd AlexNet-Modern-PyTorch
 ```
 ### 2. Run inference on a test image (Make sure test_image.jpg exists)
